@@ -1,75 +1,56 @@
 
 public class Main {
     public static void main(String[] args) {
-        Game game=new Game();
-        Ping ping=new Ping(game);
-        Pong pong=new Pong(game);
+        final Object lock = new Object();
+        PingPong ping=new PingPong("ping",lock);
+        PingPong pong=new PingPong("pong",lock);
+
         Thread thread1 = new Thread(ping);
-        thread1.start();
         Thread thread2 = new Thread(pong);
+        thread1.start();
         thread2.start();
     }
 }
 
-class Game {
-    boolean flag= false;
-    public synchronized void ping() {
-        while (flag) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-            }
-        }
-        flag = true;
-        System.out.println("ping");
 
-        notify();
-    }
+class PingPong implements Runnable {
 
+String p;
+Object lock;
 
-    public synchronized void pong() {
-        while (!flag) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-            }
-        }
-        flag = false;
-        System.out.println("pong");
-
-        notify();
+    PingPong(String p,Object lock) {
+        this.p= p;
+        this.lock=lock;
     }
 
 
 
-}
-class Ping implements Runnable{
-
-    Game game;
-    Ping(Game game) {
-        this.game=game;
-    }
 
     @Override
     public void run() {
-        while (true) {
-            game.ping();
+
+            synchronized (lock) {
+
+                while (true) {
+                    System.out.println(p);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+
+                        lock.notify();
+                        lock.wait();
+
+                    } catch (InterruptedException e) {
+                    }
+                }
+
         }
     }
-
 }
 
-class Pong implements Runnable{
 
-    Game game;
-    Pong(Game game) {
-        this.game=game;
-    }
 
-    @Override
-    public void run() {
-        while (true) {
-            game.pong();
-        }
-    }
-}
+
